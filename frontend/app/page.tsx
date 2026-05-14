@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EXAMPLE_HALLUCINATION_TEXT } from "@/lib/demo-text";
+import { getOfflineEvalMetrics } from "@/lib/eval-metrics";
+import { buildSimilarityInsight } from "@/lib/similarity-insight";
 
 type AnalyzeResponse = {
   mode: string;
@@ -18,8 +20,24 @@ type AnalyzeResponse = {
   legalAlert: boolean;
   alertMessage?: string | null;
   referenceSize?: number;
+  demoGenerativeBadge?: string | null;
+  demoGenerativeDetail?: string | null;
   error?: string;
 };
+
+function IconInfo(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M12 10v6M12 8h.01"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 function IconScale(props: { className?: string }) {
   return (
@@ -81,9 +99,30 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [metadataOpen, setMetadataOpen] = useState(false);
+
+  const offlineMetrics = useMemo(() => getOfflineEvalMetrics(), []);
+
+  const similarityInsight = useMemo(() => {
+    if (!result || !text.trim()) return "";
+    return buildSimilarityInsight(text, result.similarityPercent);
+  }, [result, text]);
+
+  const corpusUpdated =
+    process.env.NEXT_PUBLIC_REFERENCE_CORPUS_UPDATED_AT ?? "maio de 2026";
+
+  useEffect(() => {
+    if (!metadataOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMetadataOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [metadataOpen]);
 
   async function runAnalyze() {
     setClientError(null);
+    setMetadataOpen(false);
     setLoading(true);
     setResult(null);
     try {
@@ -127,6 +166,7 @@ export default function HomePage() {
         : "Somente proximidade textual";
 
   return (
+    <>
     <div className="bg-app-grid min-h-screen overflow-x-hidden">
       <main className="mx-auto max-w-5xl min-w-0 px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
         <header className="mb-10 text-center lg:mb-14">
@@ -241,29 +281,53 @@ export default function HomePage() {
             {result && !clientError && (
               <div className="space-y-6">
                 {result.mode === "simulation" && (
-                  <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-jud-accent/20 bg-slate-100/90 px-4 py-3 text-sm text-slate-800 sm:items-center sm:px-5">
-                    <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-jud-accent/15 text-[10px] font-bold uppercase tracking-wider text-jud-accent"
-                      aria-hidden
-                    >
-                      Demo
-                    </span>
-                    <p className="min-w-0 flex-1 leading-relaxed">
-                      Resultados abaixo são <strong>fixos para apresentação</strong> e não refletem o
-                      texto colado na caixa de entrada.
-                    </p>
+                  <div className="space-y-3">
+                    <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-jud-accent/20 bg-slate-100/90 px-4 py-3 text-sm text-slate-800 sm:items-center sm:px-5">
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-jud-accent/15 text-[10px] font-bold uppercase tracking-wider text-jud-accent"
+                        aria-hidden
+                      >
+                        Demo
+                      </span>
+                      <p className="min-w-0 flex-1 leading-relaxed">
+                        Resultados abaixo são <strong>fixos para apresentação</strong> e não
+                        refletem o texto colado na caixa de entrada.
+                      </p>
+                    </div>
+                    {result.demoGenerativeBadge && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-full border border-amber-300/80 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950">
+                          {result.demoGenerativeBadge}
+                        </span>
+                      </div>
+                    )}
+                    {result.demoGenerativeDetail && (
+                      <p className="rounded-xl border border-slate-200/90 bg-white/90 px-4 py-3 text-xs leading-relaxed text-slate-700">
+                        {result.demoGenerativeDetail}
+                      </p>
+                    )}
                   </div>
                 )}
 
                 <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
                   <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-jud-accent">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-jud-accent">
                           <IconScale className="h-5 w-5 shrink-0" />
                           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                             Índice de confiança
                           </h3>
+                          <button
+                            type="button"
+                            onClick={() => setMetadataOpen(true)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-jud-accent shadow-sm transition hover:bg-slate-50"
+                            aria-haspopup="dialog"
+                            aria-expanded={metadataOpen}
+                          >
+                            <IconInfo className="h-3.5 w-3.5" />
+                            Ver metadados
+                          </button>
                         </div>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">{verdictLabel}</p>
                       </div>
@@ -339,6 +403,11 @@ export default function HomePage() {
                         {result.similarityPercent}
                         <span className="text-base font-semibold text-slate-500">%</span>
                       </p>
+                      {similarityInsight && (
+                        <p className="mt-4 border-t border-slate-100 pt-4 text-xs leading-relaxed text-slate-600">
+                          {similarityInsight}
+                        </p>
+                      )}
                     </div>
                   </article>
                 </div>
@@ -387,11 +456,94 @@ export default function HomePage() {
           </section>
         </div>
 
-        <footer className="mt-16 border-t border-slate-200/80 pt-8 text-center text-xs leading-relaxed text-slate-500">
-          Ferramenta acadêmica de apoio à leitura crítica. A decisão final sobre citação e uso em
-          peças cabe sempre ao profissional, com confirmação na fonte oficial do STJ.
+        <footer className="mt-16 space-y-6 border-t border-slate-200/80 pt-8 text-center text-xs leading-relaxed text-slate-500">
+          <p>
+            Ferramenta acadêmica de apoio à leitura crítica. A decisão final sobre citação e uso em
+            peças cabe sempre ao profissional, com confirmação na fonte oficial do STJ.
+          </p>
+          <p className="mx-auto max-w-3xl rounded-2xl border border-slate-200/80 bg-white/60 px-4 py-4 text-slate-600">
+            Em conformidade com a governança de inteligência artificial no Poder Judiciário, o
+            projeto considera a{" "}
+            <strong>Resolução nº 615/2025 do Conselho Nacional de Justiça (CNJ)</strong>, que trata
+            do uso responsável de sistemas de IA. Amostra de referência (ementas reais) utilizada no
+            experimento: atualização declarada para fins acadêmicos em{" "}
+            <strong>{corpusUpdated}</strong>.
+          </p>
         </footer>
       </main>
     </div>
+
+    {metadataOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/45 p-4 sm:items-center"
+        role="presentation"
+        onClick={() => setMetadataOpen(false)}
+      >
+        <div
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="metadata-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <h2 id="metadata-title" className="text-lg font-bold text-slate-900">
+              Metadados técnicos
+            </h2>
+            <button
+              type="button"
+              onClick={() => setMetadataOpen(false)}
+              className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            Os valores abaixo referem-se à <strong>avaliação offline do classificador</strong> no
+            conjunto de teste descrito na monografia (acurácia, precisão, revocação e F1-score),
+            conforme as definições teóricas citadas no trabalho —{" "}
+            <em>não</em> são recalculados a cada clique sobre um único texto.
+          </p>
+          {!offlineMetrics.configured && (
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Preencha as variáveis <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>{" "}
+              após rodar o experimento no notebook ou script de avaliação, para exibir os números da
+              banca.
+            </p>
+          )}
+          <dl className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-600">Acurácia</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.accuracy}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-600">Precisão</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.precision}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-600">Revocação (sensibilidade)</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.recall}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-600">F1-score</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.f1}</dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-xs text-slate-500">
+            Interface alinhada ao relatório de performance do modelo supervisionado (capítulo de
+            resultados).
+          </p>
+          <button
+            type="button"
+            onClick={() => setMetadataOpen(false)}
+            className="mt-6 w-full rounded-xl bg-jud-accent py-3 text-sm font-semibold text-white transition hover:brightness-110"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

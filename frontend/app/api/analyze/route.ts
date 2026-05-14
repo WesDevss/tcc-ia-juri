@@ -75,8 +75,10 @@ export async function POST(req: Request) {
         legalAlert: true,
         alertMessage:
           "Demonstração acadêmica: indicadores ilustrativos, sem chamada ao serviço de análise.",
-        classifierNote:
-          "Modo demonstração ativo: os valores não refletem análise ao vivo do texto.",
+        demoGenerativeBadge:
+          "Hipótese de trabalho: inconsistência típica de modelo generativo (LLM)",
+        demoGenerativeDetail:
+          "Este exemplo reproduz padrões frequentes de alucinação factual: numeração de recurso inexistente e citação de súmula apócrifa. Em defesa acadêmica, associa-se a respostas não verificadas de assistentes de IA generativa.",
         referenceSize: STJ_REFERENCE_SNIPPETS.length,
       });
     }

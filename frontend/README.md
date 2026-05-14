@@ -45,6 +45,11 @@ No painel do projeto: **Settings → Environment Variables**:
 | `HF_CLASSIFIER_MODEL_ID` | Não | ID do modelo de **classificação de sequência** no Hub (após fine-tuning) |
 | `HF_EMBEDDING_MODEL` | Não | Padrão: `rufimelo/Legal-BERTimbau-sts-large-ma-v3` |
 | `SIMILARITY_ALERT_THRESHOLD` | Não | Padrão `0.38` — cosseno máximo abaixo disso aciona o alerta |
+| `NEXT_PUBLIC_EVAL_ACCURACY` | Não | Proporção 0–1 ou %; exibida no modal **Ver metadados** |
+| `NEXT_PUBLIC_EVAL_PRECISION` | Não | Idem |
+| `NEXT_PUBLIC_EVAL_RECALL` | Não | Idem |
+| `NEXT_PUBLIC_EVAL_F1` | Não | Idem |
+| `NEXT_PUBLIC_REFERENCE_CORPUS_UPDATED_AT` | Não | Texto livre (ex.: `maio de 2026`) para o rodapé de conformidade |
 
 ## Deploy na Vercel
 
