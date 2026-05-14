@@ -146,25 +146,25 @@ export default function HomePage() {
 
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <section className="lg:col-span-5">
-            <div className="sticky top-8 rounded-3xl border border-slate-200/90 bg-white/95 p-6 shadow-card-lg backdrop-blur-sm sm:p-8">
+            <div className="sticky top-8 rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-card-lg backdrop-blur-sm sm:p-9 lg:p-10">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Entrada
               </h2>
-              <p className="mt-1 text-lg font-semibold text-slate-900">Texto para análise</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Texto para análise</p>
 
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between">
-                <div className="flex flex-1 items-start gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/60 px-4 py-3">
+              <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4">
+                <div className="flex min-h-[5.5rem] flex-1 items-start gap-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 px-5 py-4 sm:min-h-0">
                   <input
                     type="checkbox"
                     id="modo-demo"
                     checked={simulation}
                     onChange={(e) => setSimulation(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-jud-accent focus:ring-2 focus:ring-jud-accent/30"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-jud-accent focus:ring-2 focus:ring-jud-accent/30"
                   />
                   <label htmlFor="modo-demo" className="cursor-pointer text-sm leading-snug">
                     <span className="font-semibold text-slate-800">Modo demonstração</span>
-                    <span className="mt-0.5 block text-xs font-normal text-slate-500">
-                      Usa indicadores fixos, sem consulta ao serviço de análise.
+                    <span className="mt-1 block text-xs font-normal leading-relaxed text-slate-500">
+                      Indicadores de exemplo, sem execução da análise no servidor.
                     </span>
                   </label>
                 </div>
@@ -172,29 +172,29 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={fillHallucinationExample}
-                  className="shrink-0 rounded-xl border border-amber-200/90 bg-gradient-to-b from-amber-50 to-amber-100/80 px-4 py-2.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:border-amber-300 hover:from-amber-100 hover:to-amber-50"
+                  className="inline-flex min-h-[3rem] shrink-0 items-center justify-center rounded-xl border border-jud-accent/30 bg-white px-5 py-3 text-sm font-semibold text-jud-accent shadow-sm transition hover:border-jud-accent/50 hover:bg-slate-50/90 sm:max-w-[13.5rem] sm:self-stretch"
                 >
                   Carregar exemplo duvidoso
                 </button>
               </div>
 
-              <label htmlFor="juris" className="mt-8 block text-sm font-medium text-slate-800">
+              <label htmlFor="juris" className="mt-10 block text-sm font-medium text-slate-800">
                 Cole a ementa ou o trecho decisório
               </label>
               <textarea
                 id="juris"
-                rows={12}
+                rows={11}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Ex.: ementa de agravo, recurso especial, ou texto colado de outra fonte…"
-                className="mt-2 w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-[15px] leading-relaxed text-slate-900 shadow-inner outline-none transition placeholder:text-slate-400 focus:border-jud-accent/50 focus:bg-white focus:ring-2 focus:ring-jud-accent/20"
+                className="mt-3 min-h-[220px] w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-[15px] leading-relaxed text-slate-900 shadow-inner outline-none transition placeholder:text-slate-400 focus:border-jud-accent/50 focus:bg-white focus:ring-2 focus:ring-jud-accent/20 sm:min-h-[260px]"
               />
 
               <button
                 type="button"
                 disabled={loading || !text.trim()}
                 onClick={runAnalyze}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-jud-accent to-[#152a45] px-5 py-3.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-jud-accent to-[#152a45] px-5 py-4 text-sm font-semibold text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {loading ? (
                   <>
@@ -240,19 +240,34 @@ export default function HomePage() {
 
             {result && !clientError && (
               <div className="space-y-6">
+                {result.mode === "simulation" && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-jud-accent/20 bg-slate-100/90 px-4 py-3 text-sm text-slate-800 sm:px-5">
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-jud-accent/15 text-[10px] font-bold uppercase tracking-wider text-jud-accent"
+                      aria-hidden
+                    >
+                      Demo
+                    </span>
+                    <p className="leading-relaxed">
+                      Resultados abaixo são <strong>fixos para apresentação</strong> e não refletem o
+                      texto colado na caixa de entrada.
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid gap-6 sm:grid-cols-2">
                   <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2 text-jud-accent">
-                          <IconScale className="h-5 w-5" />
+                          <IconScale className="h-5 w-5 shrink-0" />
                           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                             Índice de confiança
                           </h3>
                         </div>
-                        <p className="mt-2 text-sm leading-snug text-slate-600">{verdictLabel}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{verdictLabel}</p>
                       </div>
-                      <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold tabular-nums text-slate-700">
+                      <span className="shrink-0 rounded-xl bg-slate-100 px-3 py-1.5 text-sm font-bold tabular-nums text-slate-800 ring-1 ring-slate-200/80">
                         {result.veracityPercent}%
                       </span>
                     </div>
@@ -263,15 +278,23 @@ export default function HomePage() {
                           style={{ width: `${result.veracityPercent}%` }}
                         />
                       </div>
+                      <p className="mt-4 text-center text-2xl font-bold tabular-nums text-slate-900">
+                        {result.veracityPercent}
+                        <span className="text-base font-semibold text-slate-500">%</span>
+                      </p>
                     </div>
                     {result.classification && (
-                      <dl className="mt-5 space-y-2 border-t border-slate-100 pt-4 text-sm">
+                      <dl className="mt-5 space-y-2.5 border-t border-slate-100 pt-5 text-sm">
                         <div className="flex justify-between gap-3">
                           <dt className="text-slate-500">Origem do sinal</dt>
                           <dd className="text-right font-medium text-slate-900">{analysisOrigin}</dd>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <dt className="text-slate-500">Confiança do modelo</dt>
+                          <dt className="text-slate-500">
+                            {result.mode === "simulation"
+                              ? "Confiança ilustrativa"
+                              : "Confiança do modelo"}
+                          </dt>
                           <dd className="font-semibold tabular-nums text-slate-900">
                             {(result.classification.confidence * 100).toFixed(1)}%
                           </dd>
@@ -327,7 +350,7 @@ export default function HomePage() {
                       : "border-emerald-200/90 bg-gradient-to-br from-emerald-50/90 to-white"
                   }`}
                 >
-                  <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:gap-6 sm:p-8">
+                  <div className="flex flex-col gap-5 p-7 sm:flex-row sm:items-start sm:gap-7 sm:p-8">
                     <div
                       className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                         result.legalAlert ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"
@@ -351,7 +374,7 @@ export default function HomePage() {
                           de qualquer peça ou parecer.
                         </p>
                       )}
-                      {result.classifierNote && (
+                      {result.classifierNote && result.mode !== "simulation" && (
                         <p className="mt-4 rounded-xl border border-slate-200/80 bg-white/70 px-4 py-3 text-xs leading-relaxed text-slate-700">
                           {result.classifierNote}
                         </p>
