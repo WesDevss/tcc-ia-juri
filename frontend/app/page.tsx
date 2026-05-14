@@ -17,11 +17,63 @@ type AnalyzeResponse = {
   classifierNote?: string | null;
   legalAlert: boolean;
   alertMessage?: string | null;
-  embeddingModel: string;
-  classifierModel: string | null;
   referenceSize?: number;
   error?: string;
 };
+
+function IconScale(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden>
+      <path
+        d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconLink(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden>
+      <path
+        d="M10 13a5 5 0 007.07.07l1-1a5 5 0 00-7.07-7.07l-1.41 1.41M14 11a5 5 0 00-7.07-.07l-1 1a5 5 0 007.07 7.07l1.41-1.41"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconShield(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden>
+      <path
+        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconLoader(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={`animate-spin ${props.className}`} aria-hidden>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+      <path
+        d="M12 2a10 10 0 019.8 8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 export default function HomePage() {
   const [text, setText] = useState("");
@@ -42,12 +94,12 @@ export default function HomePage() {
       });
       const data = (await res.json()) as AnalyzeResponse & { error?: string };
       if (!res.ok) {
-        setClientError(data.error ?? "Falha na análise.");
+        setClientError(data.error ?? "Não foi possível concluir a análise.");
         return;
       }
       setResult(data);
     } catch {
-      setClientError("Não foi possível contatar o servidor.");
+      setClientError("Conexão indisponível. Verifique sua rede e tente outra vez.");
     } finally {
       setLoading(false);
     }
@@ -60,185 +112,263 @@ export default function HomePage() {
 
   const verdictLabel =
     result?.classification?.verdict === "real"
-      ? "Provável jurisprudência consistente"
+      ? "O texto se alinha a padrões típicos de jurisprudência autêntica."
       : result?.classification?.verdict === "alucinada"
-        ? "Provável alucinação / texto duvidoso"
+        ? "Há forte indício de inconsistência ou fabricação em relação à prática usual do STJ."
         : result?.classification
-          ? "Veredito incerto"
-          : "Somente similaridade (sem classificador no Hub)";
+          ? "O sistema não atribuiu uma classe clara; use cautela e confirme na fonte oficial."
+          : "Indicador calculado pela proximidade linguística com uma amostra curada de referência do STJ.";
+
+  const analysisOrigin =
+    result?.classification?.source === "hf_classifier"
+      ? "Modelo supervisionado"
+      : result?.mode === "simulation"
+        ? "Demonstração acadêmica"
+        : "Somente proximidade textual";
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-10 border-b border-slate-200 pb-8">
-        <p className="text-sm font-semibold uppercase tracking-widest text-amber-800">
-          TCC — Engenharia de Software
-        </p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
-          Verificação de confiabilidade de jurisprudência
-        </h1>
-        <p className="mt-3 max-w-2xl text-slate-600">
-          Interface na Vercel (Next.js) com inferência no Hugging Face: similaridade
-          semântica com trechos reais de referência e, opcionalmente, classificador
-          binário publicado após o fine-tuning do BERTimbau.
-        </p>
-      </header>
+    <div className="bg-app-grid min-h-screen">
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
+        <header className="mb-10 text-center lg:mb-14">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            Projeto acadêmico
+          </div>
+          <h1 className="text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.35rem]">
+            Confiabilidade de jurisprudência
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
+            Compare ementas e trechos decisórios com padrões extraídos de decisões reais do STJ.
+            Indicadores ajudam a identificar possíveis distorções ou trechos que merecem checagem
+            manual antes de uso profissional.
+          </p>
+        </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={simulation}
-              onChange={(e) => setSimulation(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-jud-accent focus:ring-jud-accent"
-            />
-            Modo simulação (demo estável para banca)
-          </label>
-          <button
-            type="button"
-            onClick={fillHallucinationExample}
-            className="rounded-lg border border-amber-700/40 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
-          >
-            Exemplo de alucinação
-          </button>
+        <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+          <section className="lg:col-span-5">
+            <div className="sticky top-8 rounded-3xl border border-slate-200/90 bg-white/95 p-6 shadow-card-lg backdrop-blur-sm sm:p-8">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Entrada
+              </h2>
+              <p className="mt-1 text-lg font-semibold text-slate-900">Texto para análise</p>
+
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between">
+                <div className="flex flex-1 items-start gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/60 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    id="modo-demo"
+                    checked={simulation}
+                    onChange={(e) => setSimulation(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-jud-accent focus:ring-2 focus:ring-jud-accent/30"
+                  />
+                  <label htmlFor="modo-demo" className="cursor-pointer text-sm leading-snug">
+                    <span className="font-semibold text-slate-800">Modo demonstração</span>
+                    <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                      Usa indicadores fixos, sem consulta ao serviço de análise.
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={fillHallucinationExample}
+                  className="shrink-0 rounded-xl border border-amber-200/90 bg-gradient-to-b from-amber-50 to-amber-100/80 px-4 py-2.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:border-amber-300 hover:from-amber-100 hover:to-amber-50"
+                >
+                  Carregar exemplo duvidoso
+                </button>
+              </div>
+
+              <label htmlFor="juris" className="mt-8 block text-sm font-medium text-slate-800">
+                Cole a ementa ou o trecho decisório
+              </label>
+              <textarea
+                id="juris"
+                rows={12}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Ex.: ementa de agravo, recurso especial, ou texto colado de outra fonte…"
+                className="mt-2 w-full resize-y rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-[15px] leading-relaxed text-slate-900 shadow-inner outline-none transition placeholder:text-slate-400 focus:border-jud-accent/50 focus:bg-white focus:ring-2 focus:ring-jud-accent/20"
+              />
+
+              <button
+                type="button"
+                disabled={loading || !text.trim()}
+                onClick={runAnalyze}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-jud-accent to-[#152a45] px-5 py-3.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {loading ? (
+                  <>
+                    <IconLoader className="h-5 w-5" />
+                    Processando…
+                  </>
+                ) : (
+                  "Executar análise"
+                )}
+              </button>
+
+              {clientError && (
+                <div
+                  className="mt-5 flex gap-3 rounded-2xl border border-red-200/90 bg-red-50/95 px-4 py-3 text-sm text-red-900"
+                  role="alert"
+                >
+                  <span className="mt-0.5 text-red-600" aria-hidden>
+                    ●
+                  </span>
+                  <p>{clientError}</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="lg:col-span-7">
+            {!result && !loading && (
+              <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/90 bg-white/40 px-6 py-12 text-center text-slate-500">
+                <IconScale className="mb-4 h-12 w-12 text-slate-400" />
+                <p className="max-w-sm text-sm leading-relaxed">
+                  Os indicadores de aderência e o painel de alerta aparecem aqui após você
+                  executar a análise.
+                </p>
+              </div>
+            )}
+
+            {loading && (
+              <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-slate-200/90 bg-white/80 shadow-card">
+                <IconLoader className="h-10 w-10 text-jud-accent" />
+                <p className="mt-4 text-sm font-medium text-slate-600">Analisando o texto…</p>
+              </div>
+            )}
+
+            {result && !clientError && (
+              <div className="space-y-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 text-jud-accent">
+                          <IconScale className="h-5 w-5" />
+                          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                            Índice de confiança
+                          </h3>
+                        </div>
+                        <p className="mt-2 text-sm leading-snug text-slate-600">{verdictLabel}</p>
+                      </div>
+                      <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold tabular-nums text-slate-700">
+                        {result.veracityPercent}%
+                      </span>
+                    </div>
+                    <div className="mt-5">
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/80">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-500 transition-all duration-700 ease-out"
+                          style={{ width: `${result.veracityPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                    {result.classification && (
+                      <dl className="mt-5 space-y-2 border-t border-slate-100 pt-4 text-sm">
+                        <div className="flex justify-between gap-3">
+                          <dt className="text-slate-500">Origem do sinal</dt>
+                          <dd className="text-right font-medium text-slate-900">{analysisOrigin}</dd>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <dt className="text-slate-500">Confiança do modelo</dt>
+                          <dd className="font-semibold tabular-nums text-slate-900">
+                            {(result.classification.confidence * 100).toFixed(1)}%
+                          </dd>
+                        </div>
+                        {result.classification.rawLabel && (
+                          <details className="pt-1 text-xs text-slate-500">
+                            <summary className="cursor-pointer font-medium text-slate-600">
+                              Detalhe técnico da classe
+                            </summary>
+                            <p className="mt-2 font-mono text-[11px] text-slate-600">
+                              {result.classification.rawLabel}
+                            </p>
+                          </details>
+                        )}
+                      </dl>
+                    )}
+                  </article>
+
+                  <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                    <div className="flex items-center gap-2 text-jud-accent">
+                      <IconLink className="h-5 w-5" />
+                      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                        Aderência ao STJ (referência)
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      Proximidade estimada em relação a {result.referenceSize ?? "—"} trechos
+                      decisórios reais selecionados como referência.
+                    </p>
+                    <div className="mt-5">
+                      <div className="mb-1 flex justify-between text-xs font-medium text-slate-500">
+                        <span>Distinto do padrão</span>
+                        <span>Próximo do padrão</span>
+                      </div>
+                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/80">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-slate-400 to-jud-accent transition-all duration-700 ease-out"
+                          style={{ width: `${result.similarityPercent}%` }}
+                        />
+                      </div>
+                      <p className="mt-3 text-center text-2xl font-bold tabular-nums text-slate-900">
+                        {result.similarityPercent}
+                        <span className="text-base font-semibold text-slate-500">%</span>
+                      </p>
+                    </div>
+                  </article>
+                </div>
+
+                <article
+                  className={`overflow-hidden rounded-3xl border shadow-card ${
+                    result.legalAlert
+                      ? "border-rose-200/90 bg-gradient-to-br from-rose-50 to-white"
+                      : "border-emerald-200/90 bg-gradient-to-br from-emerald-50/90 to-white"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:gap-6 sm:p-8">
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                        result.legalAlert ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      <IconShield className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {result.legalAlert ? "Atenção: verificação recomendada" : "Situação mais favorável"}
+                      </h3>
+                      {result.legalAlert ? (
+                        <p className="mt-2 text-sm leading-relaxed text-rose-950/90">
+                          {result.alertMessage ??
+                            "O trecho destoa do padrão da amostra oficial de referência. Não use como citação sem conferir no STJ."}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-sm leading-relaxed text-emerald-950/85">
+                          O texto aproxima-se linguisticamente dos exemplos reais analisados. Ainda
+                          assim, confirme números de processo e citações no site oficial do STJ antes
+                          de qualquer peça ou parecer.
+                        </p>
+                      )}
+                      {result.classifierNote && (
+                        <p className="mt-4 rounded-xl border border-slate-200/80 bg-white/70 px-4 py-3 text-xs leading-relaxed text-slate-700">
+                          {result.classifierNote}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              </div>
+            )}
+          </section>
         </div>
 
-        <label htmlFor="juris" className="mt-6 block text-sm font-medium text-slate-800">
-          Texto da jurisprudência
-        </label>
-        <textarea
-          id="juris"
-          rows={10}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Cole ementa, trecho de acórdão ou texto gerado por LLM…"
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 shadow-inner outline-none ring-jud-accent focus:border-jud-accent focus:ring-2"
-        />
-
-        <button
-          type="button"
-          disabled={loading || !text.trim()}
-          onClick={runAnalyze}
-          className="mt-4 w-full rounded-xl bg-jud-accent px-4 py-3 text-center text-sm font-semibold text-white shadow transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[200px]"
-        >
-          {loading ? "Analisando…" : "Analisar confiabilidade"}
-        </button>
-
-        {clientError && (
-          <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-            {clientError}
-          </p>
-        )}
-      </section>
-
-      {result && !clientError && (
-        <section className="mt-10 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Termômetro de veracidade</h2>
-            <p className="mt-1 text-sm text-slate-500">{verdictLabel}</p>
-            <div className="mt-4">
-              <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-600 transition-all duration-700"
-                  style={{ width: `${result.veracityPercent}%` }}
-                />
-              </div>
-              <p className="mt-2 text-right text-2xl font-bold tabular-nums text-slate-900">
-                {result.veracityPercent}%
-              </p>
-            </div>
-            {result.classification && (
-              <dl className="mt-4 space-y-1 text-sm text-slate-600">
-                <div className="flex justify-between gap-4">
-                  <dt>Fonte do veredito</dt>
-                  <dd className="font-medium text-slate-900">
-                    {result.classification.source === "hf_classifier"
-                      ? "Modelo no Hub"
-                      : result.mode === "simulation"
-                        ? "Simulação"
-                        : "—"}
-                  </dd>
-                </div>
-                {result.classification.rawLabel && (
-                  <div className="flex justify-between gap-4">
-                    <dt>Classe (Hub)</dt>
-                    <dd className="text-right font-mono text-xs text-slate-800">
-                      {result.classification.rawLabel}
-                    </dd>
-                  </div>
-                )}
-                <div className="flex justify-between gap-4">
-                  <dt>Confiança</dt>
-                  <dd className="font-medium text-slate-900">
-                    {(result.classification.confidence * 100).toFixed(1)}%
-                  </dd>
-                </div>
-              </dl>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Similaridade com a base STJ (referência)</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Máximo cosseno em relação a {result.referenceSize ?? "—"} trechos indexados no
-              protótipo.
-            </p>
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>Distante</span>
-                <span>Próximo</span>
-              </div>
-              <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full rounded-full bg-jud-accent transition-all duration-700"
-                  style={{ width: `${result.similarityPercent}%` }}
-                />
-              </div>
-              <p className="mt-2 text-sm text-slate-700">
-                Cosseno máximo:{" "}
-                <span className="font-mono font-semibold">{result.similarityMax.toFixed(4)}</span>{" "}
-                · Indicador:{" "}
-                <span className="font-semibold">{result.similarityPercent}%</span>
-              </p>
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-6 shadow-sm lg:col-span-2 ${
-              result.legalAlert
-                ? "border-rose-300 bg-rose-50"
-                : "border-emerald-200 bg-emerald-50/60"
-            }`}
-          >
-            <h2 className="text-lg font-semibold text-slate-900">Alerta de insegurança jurídica</h2>
-            {result.legalAlert ? (
-              <p className="mt-2 text-sm text-rose-900">
-                {result.alertMessage ??
-                  "Baixa aderência semântica à amostra de referência: trate como não verificada na base oficial."}
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-emerald-900">
-                Aderência semântica acima do limiar configurado. Ainda assim, confirme sempre no
-                portal do STJ.
-              </p>
-            )}
-            {result.classifierNote && (
-              <p className="mt-4 border-t border-black/10 pt-4 text-xs text-slate-700">
-                <strong>Classificador:</strong> {result.classifierNote}
-              </p>
-            )}
-            <p className="mt-3 font-mono text-[11px] text-slate-500">
-              Embeddings: {result.embeddingModel}
-              {result.classifierModel ? ` · Classificação: ${result.classifierModel}` : ""}
-            </p>
-          </div>
-        </section>
-      )}
-
-      <footer className="mt-12 text-center text-xs text-slate-500">
-        Camada de apresentação (Vercel) desacoplada da inferência (Hugging Face). Token apenas no
-        servidor.
-      </footer>
-    </main>
+        <footer className="mt-16 border-t border-slate-200/80 pt-8 text-center text-xs leading-relaxed text-slate-500">
+          Ferramenta acadêmica de apoio à leitura crítica. A decisão final sobre citação e uso em
+          peças cabe sempre ao profissional, com confirmação na fonte oficial do STJ.
+        </footer>
+      </main>
+    </div>
   );
 }

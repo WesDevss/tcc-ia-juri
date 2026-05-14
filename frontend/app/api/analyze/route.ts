@@ -74,9 +74,10 @@ export async function POST(req: Request) {
         },
         legalAlert: true,
         alertMessage:
-          "Modo simulação: valores fixos para demonstração (rede ou API indisponíveis).",
-        embeddingModel: EMBEDDING_MODEL,
-        classifierModel: process.env.HF_CLASSIFIER_MODEL_ID ?? null,
+          "Demonstração acadêmica: indicadores ilustrativos, sem chamada ao serviço de análise.",
+        classifierNote:
+          "Modo demonstração ativo: os valores não refletem análise ao vivo do texto.",
+        referenceSize: STJ_REFERENCE_SNIPPETS.length,
       });
     }
 
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Defina HUGGING_FACE_TOKEN nas variáveis de ambiente (Vercel ou .env.local).",
+            "O serviço de análise não está disponível: configure as credenciais do ambiente com o administrador do sistema.",
         },
         { status: 500 }
       );
@@ -132,15 +133,13 @@ export async function POST(req: Request) {
             source: "hf_classifier",
           };
         }
-      } catch (e) {
+      } catch {
         classifierNote =
-          e instanceof Error
-            ? e.message
-            : "Falha na classificação via Hub.";
+          "O classificador automático não respondeu. A leitura por proximidade com a base de referência segue válida.";
       }
     } else {
       classifierNote =
-        "Nenhum HF_CLASSIFIER_MODEL_ID configurado. Publique o BERTimbau fine-tuned no Hugging Face e defina o ID do repositório (classificação binária). O endpoint público de neuralmind/bert-base-portuguese-cased não realiza essa tarefa.";
+        "O veredito por modelo supervisionado completo será exibido quando o modelo treinado pelo projeto estiver publicado e ligado ao sistema.";
     }
 
     let veracityPercent = similarityPercent;
@@ -162,14 +161,17 @@ export async function POST(req: Request) {
       classifierNote,
       legalAlert,
       alertMessage: legalAlert
-        ? "Baixa similaridade semântica com a amostra de referência do STJ: possível alucinação ou texto fora do padrão da base indexada."
+        ? "Baixa convergência com o padrão linguístico da amostra oficial de referência: trate o trecho como não verificado até consulta no STJ."
         : null,
-      embeddingModel: EMBEDDING_MODEL,
-      classifierModel: clfId || null,
       referenceSize: STJ_REFERENCE_SNIPPETS.length,
     });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Erro desconhecido.";
-    return NextResponse.json({ error: msg }, { status: 502 });
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Não foi possível concluir a análise agora. Tente novamente em instantes ou ative o modo demonstração.",
+      },
+      { status: 502 }
+    );
   }
 }

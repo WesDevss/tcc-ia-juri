@@ -4,14 +4,15 @@ import "./globals.css";
 
 const sans = Source_Sans_3({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-app",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "IA Juri — Verificação de jurisprudência",
+  title: "JurisCheck — Confiabilidade de jurisprudência",
   description:
-    "Dashboard acadêmico: classificação supervisionada e similaridade semântica com base STJ (TCC).",
+    "Análise de confiabilidade de trechos jurídicos frente a padrões de referência do STJ (projeto acadêmico).",
 };
 
 export default function RootLayout({
@@ -21,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${sans.variable} min-h-screen font-sans`}>{children}</body>
+      <body className={`${sans.variable} font-sans`}>{children}</body>
     </html>
   );
 }

@@ -3,10 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --jud-paper: #f4f6f8;
-  --jud-ink: #0f172a;
+  --jud-paper: #f1f4f9;
+  --jud-ink: #0c1222;
+  --jud-line: rgba(12, 18, 34, 0.08);
 }
 
 body {
-  @apply bg-jud-paper text-jud-ink antialiased;
+  @apply text-jud-ink antialiased;
+  background: linear-gradient(165deg, #eef2f9 0%, #e8edf6 42%, #f4f1ec 100%);
+  min-height: 100vh;
+}
+
+/* Textura leve */
+.bg-app-grid {
+  background-image: radial-gradient(
+    rgba(30, 58, 95, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
 }
