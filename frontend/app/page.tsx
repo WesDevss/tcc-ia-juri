@@ -127,8 +127,8 @@ export default function HomePage() {
         : "Somente proximidade textual";
 
   return (
-    <div className="bg-app-grid min-h-screen">
-      <main className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
+    <div className="bg-app-grid min-h-screen overflow-x-hidden">
+      <main className="mx-auto max-w-5xl min-w-0 px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
         <header className="mb-10 text-center lg:mb-14">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
@@ -144,16 +144,16 @@ export default function HomePage() {
           </p>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
-          <section className="lg:col-span-5">
-            <div className="sticky top-8 rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-card-lg backdrop-blur-sm sm:p-9 lg:p-10">
+        <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
+          <section className="min-w-0 lg:col-span-5">
+            <div className="sticky top-8 max-w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-card-lg backdrop-blur-sm sm:p-9 lg:p-10">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Entrada
               </h2>
               <p className="mt-1 text-lg font-semibold text-slate-900 sm:text-xl">Texto para análise</p>
 
-              <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-stretch sm:justify-between sm:gap-4">
-                <div className="flex min-h-[5.5rem] flex-1 items-start gap-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 px-5 py-4 sm:min-h-0">
+              <div className="mt-8 flex min-w-0 flex-col gap-3">
+                <div className="flex w-full min-w-0 items-start gap-4 rounded-2xl border border-slate-200/90 bg-slate-50/70 px-5 py-4">
                   <input
                     type="checkbox"
                     id="modo-demo"
@@ -161,7 +161,7 @@ export default function HomePage() {
                     onChange={(e) => setSimulation(e.target.checked)}
                     className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-jud-accent focus:ring-2 focus:ring-jud-accent/30"
                   />
-                  <label htmlFor="modo-demo" className="cursor-pointer text-sm leading-snug">
+                  <label htmlFor="modo-demo" className="min-w-0 flex-1 cursor-pointer text-sm leading-snug">
                     <span className="font-semibold text-slate-800">Modo demonstração</span>
                     <span className="mt-1 block text-xs font-normal leading-relaxed text-slate-500">
                       Indicadores de exemplo, sem execução da análise no servidor.
@@ -172,7 +172,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={fillHallucinationExample}
-                  className="inline-flex min-h-[3rem] shrink-0 items-center justify-center rounded-xl border border-jud-accent/30 bg-white px-5 py-3 text-sm font-semibold text-jud-accent shadow-sm transition hover:border-jud-accent/50 hover:bg-slate-50/90 sm:max-w-[13.5rem] sm:self-stretch"
+                  className="w-full rounded-xl border border-jud-accent/30 bg-white px-4 py-3 text-center text-sm font-semibold leading-snug text-jud-accent shadow-sm transition hover:border-jud-accent/50 hover:bg-slate-50/90"
                 >
                   Carregar exemplo duvidoso
                 </button>
@@ -220,7 +220,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="lg:col-span-7">
+          <section className="min-w-0 lg:col-span-7">
             {!result && !loading && (
               <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300/90 bg-white/40 px-6 py-12 text-center text-slate-500">
                 <IconScale className="mb-4 h-12 w-12 text-slate-400" />
@@ -241,22 +241,22 @@ export default function HomePage() {
             {result && !clientError && (
               <div className="space-y-6">
                 {result.mode === "simulation" && (
-                  <div className="flex items-center gap-3 rounded-2xl border border-jud-accent/20 bg-slate-100/90 px-4 py-3 text-sm text-slate-800 sm:px-5">
+                  <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-jud-accent/20 bg-slate-100/90 px-4 py-3 text-sm text-slate-800 sm:items-center sm:px-5">
                     <span
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-jud-accent/15 text-[10px] font-bold uppercase tracking-wider text-jud-accent"
                       aria-hidden
                     >
                       Demo
                     </span>
-                    <p className="leading-relaxed">
+                    <p className="min-w-0 flex-1 leading-relaxed">
                       Resultados abaixo são <strong>fixos para apresentação</strong> e não refletem o
                       texto colado na caixa de entrada.
                     </p>
                   </div>
                 )}
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
+                  <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-jud-accent">
@@ -313,7 +313,7 @@ export default function HomePage() {
                     )}
                   </article>
 
-                  <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                  <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
                     <div className="flex items-center gap-2 text-jud-accent">
                       <IconLink className="h-5 w-5" />
                       <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
