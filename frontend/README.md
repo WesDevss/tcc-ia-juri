@@ -50,6 +50,7 @@ No painel do projeto: **Settings → Environment Variables**:
 | `NEXT_PUBLIC_EVAL_RECALL` | Não | Idem |
 | `NEXT_PUBLIC_EVAL_F1` | Não | Idem |
 | `NEXT_PUBLIC_REFERENCE_CORPUS_UPDATED_AT` | Não | Texto livre (ex.: `maio de 2026`) para o rodapé de conformidade |
+| `NEXT_PUBLIC_CM_VP` / `FP` / `FN` / `VN` | Não | Contagens para a matriz de confusão no modal (inteiros) |
 
 ## Deploy na Vercel
 

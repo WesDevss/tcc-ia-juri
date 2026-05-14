@@ -1,29 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { AnalyzeResponse } from "@/lib/analyze-types";
 import { EXAMPLE_HALLUCINATION_TEXT } from "@/lib/demo-text";
-import { getOfflineEvalMetrics } from "@/lib/eval-metrics";
+import { getOfflineEvalMetrics, resolveEvalForDisplay } from "@/lib/eval-metrics";
 import { buildSimilarityInsight } from "@/lib/similarity-insight";
-
-type AnalyzeResponse = {
-  mode: string;
-  similarityMax: number;
-  similarityPercent: number;
-  veracityPercent: number;
-  classification: {
-    verdict: string;
-    confidence: number;
-    rawLabel?: string;
-    source: string;
-  } | null;
-  classifierNote?: string | null;
-  legalAlert: boolean;
-  alertMessage?: string | null;
-  referenceSize?: number;
-  demoGenerativeBadge?: string | null;
-  demoGenerativeDetail?: string | null;
-  error?: string;
-};
+import { findSuspiciousSpans, renderTextWithHighlights } from "@/lib/highlight-hallucinations";
+import { getConfusionForDisplay } from "@/lib/confusion-matrix";
+import { downloadIntegrityPdf } from "@/lib/export-integrity-pdf";
 
 function IconInfo(props: { className?: string }) {
   return (
@@ -79,6 +63,138 @@ function IconShield(props: { className?: string }) {
   );
 }
 
+function HighlightedPreview({ text }: { text: string }) {
+  const spans = useMemo(() => findSuspiciousSpans(text), [text]);
+  const parts = useMemo(() => renderTextWithHighlights(text, spans), [text, spans]);
+  return (
+    <div className="max-h-[min(70vh,28rem)] min-h-[200px] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-left text-[15px] leading-relaxed text-slate-900 break-words whitespace-pre-wrap">
+      {parts.length === 0 ? (
+        <span className="text-slate-400">(sem texto)</span>
+      ) : (
+        parts.map((p, idx) =>
+          p.reason ? (
+            <mark
+              key={`${p.key}-${idx}`}
+              title={p.reason}
+              className="cursor-help rounded-sm bg-red-100 px-0.5 font-medium text-red-950 underline decoration-red-400 decoration-2 underline-offset-2"
+            >
+              {p.text}
+            </mark>
+          ) : (
+            <span key={`${p.key}-${idx}`}>{p.text}</span>
+          )
+        )
+      )}
+    </div>
+  );
+}
+
+function RagFlowStrip() {
+  const steps = [
+    { n: "1", t: "Entrada do usuário" },
+    { n: "2", t: "Representação semântica do texto" },
+    { n: "3", t: "Comparação com amostra real do STJ" },
+    { n: "4", t: "Índices e veredito supervisionado" },
+  ];
+  return (
+    <div
+      className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-3"
+      role="img"
+      aria-label="Fluxo de análise ancorada em evidências"
+    >
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        Caminho da confiança (RAG conceitual)
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+        {steps.map((s, i) => (
+          <span key={s.n} className="flex items-center gap-1 text-xs text-slate-700">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-jud-accent/15 text-[11px] font-bold text-jud-accent">
+              {s.n}
+            </span>
+            <span className="font-medium">{s.t}</span>
+            {i < steps.length - 1 && (
+              <span className="hidden px-1 text-slate-300 sm:inline" aria-hidden>
+                →
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ConfusionMatrixVisual({
+  vp,
+  fp,
+  fn,
+  vn,
+}: {
+  vp: number;
+  fp: number;
+  fn: number;
+  vn: number;
+}) {
+  const cell = (
+    label: string,
+    sub: string,
+    value: number,
+    ring: string,
+    bg: string
+  ) => (
+    <div
+      title={sub}
+      className={`rounded-xl border-2 p-3 text-center shadow-sm transition hover:brightness-95 ${ring} ${bg}`}
+    >
+      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
+      <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">{value}</p>
+      <p className="mt-1 text-[10px] leading-tight text-slate-600">{sub}</p>
+    </div>
+  );
+  return (
+    <div className="mt-5">
+      <p className="text-xs font-semibold text-slate-700">Matriz de confusão (conjunto de teste)</p>
+      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+        Passe o cursor sobre cada célula. <strong>Falsos positivos</strong> (FP) indicam que o modelo
+        acreditou em trecho falso — especialmente sensível no Direito.
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        {cell(
+          "VP",
+          "Acertou como real",
+          vp,
+          "border-emerald-300",
+          "bg-emerald-50/90"
+        )}
+        {cell(
+          "FP",
+          "Chamou falso de real",
+          fp,
+          "border-rose-400",
+          "bg-rose-50/90"
+        )}
+        {cell(
+          "FN",
+          "Chamou real de falso",
+          fn,
+          "border-amber-300",
+          "bg-amber-50/90"
+        )}
+        {cell(
+          "VN",
+          "Acertou como falso",
+          vn,
+          "border-slate-300",
+          "bg-slate-50/90"
+        )}
+      </div>
+      <p className="mt-3 text-[10px] text-slate-500">
+        Eixo implícito: classe prevista × classe real (binário real / não real no corpus do TCC).
+      </p>
+    </div>
+  );
+}
+
 function IconLoader(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={`animate-spin ${props.className}`} aria-hidden>
@@ -102,6 +218,16 @@ export default function HomePage() {
   const [metadataOpen, setMetadataOpen] = useState(false);
 
   const offlineMetrics = useMemo(() => getOfflineEvalMetrics(), []);
+
+  const displayedEval = useMemo(
+    () => (result ? resolveEvalForDisplay(result.mode, offlineMetrics) : null),
+    [result, offlineMetrics]
+  );
+
+  const confusionDisplay = useMemo(
+    () => (result ? getConfusionForDisplay(result.mode === "simulation") : null),
+    [result]
+  );
 
   const similarityInsight = useMemo(() => {
     if (!result || !text.trim()) return "";
@@ -149,6 +275,27 @@ export default function HomePage() {
     setSimulation(false);
   }
 
+  function exportIntegrityReport() {
+    if (!result || !displayedEval || !confusionDisplay) return;
+    downloadIntegrityPdf({
+      analyzedText: text,
+      result,
+      metrics: {
+        accuracy: displayedEval.accuracy,
+        precision: displayedEval.precision,
+        recall: displayedEval.recall,
+        f1: displayedEval.f1,
+        isSimulated: displayedEval.isSimulated,
+      },
+      corpusUpdated,
+      confusionCaption: confusionDisplay.caption,
+      vp: confusionDisplay.vp,
+      fp: confusionDisplay.fp,
+      fn: confusionDisplay.fn,
+      vn: confusionDisplay.vn,
+    });
+  }
+
   const verdictLabel =
     result?.classification?.verdict === "real"
       ? "O texto se alinha a padrões típicos de jurisprudência autêntica."
@@ -168,7 +315,7 @@ export default function HomePage() {
   return (
     <>
     <div className="bg-app-grid min-h-screen overflow-x-hidden">
-      <main className="mx-auto max-w-5xl min-w-0 px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
+      <main className="mx-auto max-w-6xl min-w-0 px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-12">
         <header className="mb-10 text-center lg:mb-14">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
@@ -308,6 +455,59 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
+
+                <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
+                  <article className="min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Entrada — marcações heurísticas
+                    </h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                      Trechos destacados seguem <strong>padrões suspeitos</strong> (ex.: numeração atípica,
+                      súmula não verificada), como apoio visual ao PLN; passe o cursor para ver o motivo.
+                    </p>
+                    <div className="mt-4">
+                      <HighlightedPreview text={text} />
+                    </div>
+                  </article>
+                  <article className="min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                      Paralelo: veredito supervisionado
+                    </h3>
+                    <RagFlowStrip />
+                    <ul className="mt-4 space-y-2 text-sm leading-relaxed text-slate-700">
+                      <li>
+                        <span className="font-semibold text-slate-800">Leitura do modelo (interface):</span>{" "}
+                        {verdictLabel}
+                      </li>
+                      <li>
+                        <span className="font-semibold text-slate-800">Índice de confiança:</span>{" "}
+                        {result.veracityPercent}%
+                      </li>
+                      <li>
+                        <span className="font-semibold text-slate-800">Aderência à amostra STJ:</span>{" "}
+                        {result.similarityPercent}%
+                      </li>
+                      <li>
+                        <span className="font-semibold text-slate-800">Origem do sinal:</span>{" "}
+                        {analysisOrigin}
+                      </li>
+                    </ul>
+                    <p className="mt-4 text-xs leading-relaxed text-slate-500">
+                      Contraste com o texto bruto: geração plausível versus âncora em evidências da amostra
+                      oficial usada no trabalho.
+                    </p>
+                  </article>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={exportIntegrityReport}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Exportar relatório de integridade (PDF)
+                  </button>
+                </div>
 
                 <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
                   <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
@@ -480,7 +680,7 @@ export default function HomePage() {
         onClick={() => setMetadataOpen(false)}
       >
         <div
-          className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-8"
+          className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="metadata-title"
@@ -505,7 +705,14 @@ export default function HomePage() {
             conforme as definições teóricas citadas no trabalho —{" "}
             <em>não</em> são recalculados a cada clique sobre um único texto.
           </p>
-          {!offlineMetrics.configured && (
+          {displayedEval?.isSimulated && (
+            <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-xs leading-relaxed text-emerald-950">
+              <strong>Modo demonstração:</strong> as métricas abaixo são{" "}
+              <strong>valores simulados</strong> coerentes com a narrativa do TCC para uso na defesa.
+              Em produção, substitua pelos números reais via <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>.
+            </p>
+          )}
+          {!displayedEval?.isSimulated && !offlineMetrics.configured && (
             <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
               Preencha as variáveis <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>{" "}
               após rodar o experimento no notebook ou script de avaliação, para exibir os números da
@@ -515,21 +722,44 @@ export default function HomePage() {
           <dl className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-slate-600">Acurácia</dt>
-              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.accuracy}</dd>
+              <dd className="font-semibold tabular-nums text-slate-900">
+                {displayedEval?.accuracy ?? "—"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-slate-600">Precisão</dt>
-              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.precision}</dd>
+              <dd className="font-semibold tabular-nums text-slate-900">
+                {displayedEval?.precision ?? "—"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-slate-600">Revocação (sensibilidade)</dt>
-              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.recall}</dd>
+              <dd className="font-semibold tabular-nums text-slate-900">
+                {displayedEval?.recall ?? "—"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-slate-600">F1-score</dt>
-              <dd className="font-semibold tabular-nums text-slate-900">{offlineMetrics.f1}</dd>
+              <dd className="font-semibold tabular-nums text-slate-900">{displayedEval?.f1 ?? "—"}</dd>
             </div>
           </dl>
+          {confusionDisplay && (
+            <>
+              <p className="mt-4 text-xs leading-relaxed text-slate-600">{confusionDisplay.caption}</p>
+              <ConfusionMatrixVisual
+                vp={confusionDisplay.vp}
+                fp={confusionDisplay.fp}
+                fn={confusionDisplay.fn}
+                vn={confusionDisplay.vn}
+              />
+            </>
+          )}
+          <div className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Fluxo resumido no protótipo
+            </p>
+            <RagFlowStrip />
+          </div>
           <p className="mt-4 text-xs text-slate-500">
             Interface alinhada ao relatório de performance do modelo supervisionado (capítulo de
             resultados).

@@ -31,3 +31,24 @@ export function getOfflineEvalMetrics(): OfflineEvalMetrics {
     configured,
   };
 }
+
+/** Métricas exibidas no modal: no modo demonstração usam valores simulados credíveis. */
+export const SIMULATED_EVAL: OfflineEvalMetrics = {
+  accuracy: "87.4%",
+  precision: "84.2%",
+  recall: "91.0%",
+  f1: "87.5%",
+  configured: true,
+};
+
+export type ResolvedEvalMetrics = OfflineEvalMetrics & { isSimulated: boolean };
+
+export function resolveEvalForDisplay(
+  analysisMode: string | undefined,
+  offline: OfflineEvalMetrics
+): ResolvedEvalMetrics {
+  if (analysisMode === "simulation") {
+    return { ...SIMULATED_EVAL, isSimulated: true };
+  }
+  return { ...offline, isSimulated: false };
+}
