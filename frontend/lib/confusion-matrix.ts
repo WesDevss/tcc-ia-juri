@@ -45,9 +45,9 @@ export function getConfusionForDisplay(isSimulation: boolean): ConfusionCounts &
         "Valores simulados para o modo demonstração, alinhados à ordem de grandeza de um experimento típico.",
     };
   }
-  return {
-    ...SIMULATED_CONFUSION,
-    caption:
-      "Valores de referência ilustrativos do experimento; configure NEXT_PUBLIC_CM_VP/FP/FN/VN após o relatório final.",
-  };
+    return {
+      ...SIMULATED_CONFUSION,
+      caption:
+        "Valores de referência ilustrativos do experimento; substitua pelas contagens do relatório final do TCC quando disponíveis.",
+    };
 }

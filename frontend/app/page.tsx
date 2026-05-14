@@ -7,7 +7,6 @@ import { getOfflineEvalMetrics, resolveEvalForDisplay } from "@/lib/eval-metrics
 import { buildSimilarityInsight } from "@/lib/similarity-insight";
 import { findSuspiciousSpans, renderTextWithHighlights } from "@/lib/highlight-hallucinations";
 import { getConfusionForDisplay } from "@/lib/confusion-matrix";
-import { downloadIntegrityPdf } from "@/lib/export-integrity-pdf";
 
 function IconInfo(props: { className?: string }) {
   return (
@@ -275,27 +274,6 @@ export default function HomePage() {
     setSimulation(false);
   }
 
-  function exportIntegrityReport() {
-    if (!result || !displayedEval || !confusionDisplay) return;
-    downloadIntegrityPdf({
-      analyzedText: text,
-      result,
-      metrics: {
-        accuracy: displayedEval.accuracy,
-        precision: displayedEval.precision,
-        recall: displayedEval.recall,
-        f1: displayedEval.f1,
-        isSimulated: displayedEval.isSimulated,
-      },
-      corpusUpdated,
-      confusionCaption: confusionDisplay.caption,
-      vp: confusionDisplay.vp,
-      fp: confusionDisplay.fp,
-      fn: confusionDisplay.fn,
-      vn: confusionDisplay.vn,
-    });
-  }
-
   const verdictLabel =
     result?.classification?.verdict === "real"
       ? "O texto se alinha a padrões típicos de jurisprudência autêntica."
@@ -499,16 +477,6 @@ export default function HomePage() {
                   </article>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={exportIntegrityReport}
-                    className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
-                  >
-                    Exportar relatório de integridade (PDF)
-                  </button>
-                </div>
-
                 <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
                   <article className="min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card sm:p-7">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -708,15 +676,13 @@ export default function HomePage() {
           {displayedEval?.isSimulated && (
             <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-xs leading-relaxed text-emerald-950">
               <strong>Modo demonstração:</strong> as métricas abaixo são{" "}
-              <strong>valores simulados</strong> coerentes com a narrativa do TCC para uso na defesa.
-              Em produção, substitua pelos números reais via <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>.
+              <strong>valores simulados</strong>, apenas para ilustrar a apresentação à banca.
             </p>
           )}
           {!displayedEval?.isSimulated && !offlineMetrics.configured && (
-            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              Preencha as variáveis <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>{" "}
-              após rodar o experimento no notebook ou script de avaliação, para exibir os números da
-              banca.
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950">
+              Os números abaixo ainda não refletem o experimento final: quando o conjunto de teste
+              estiver fechado na monografia, eles podem ser atualizados para os valores oficiais.
             </p>
           )}
           <dl className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm">
