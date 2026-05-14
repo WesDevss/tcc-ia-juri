@@ -48,6 +48,6 @@ export function getConfusionForDisplay(isSimulation: boolean): ConfusionCounts &
     return {
       ...SIMULATED_CONFUSION,
       caption:
-        "Valores de referência ilustrativos do experimento; substitua pelas contagens do relatório final do TCC quando disponíveis.",
+        "Valores de referência ilustrativos do experimento; configure NEXT_PUBLIC_CM_VP/FP/FN/VN após o relatório final.",
     };
 }

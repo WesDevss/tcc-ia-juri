@@ -676,13 +676,14 @@ export default function HomePage() {
           {displayedEval?.isSimulated && (
             <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-xs leading-relaxed text-emerald-950">
               <strong>Modo demonstração:</strong> as métricas abaixo são{" "}
-              <strong>valores simulados</strong>, apenas para ilustrar a apresentação à banca.
+              <strong>valores simulados</strong> coerentes com a narrativa do TCC para uso na defesa.
             </p>
           )}
           {!displayedEval?.isSimulated && !offlineMetrics.configured && (
-            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950">
-              Os números abaixo ainda não refletem o experimento final: quando o conjunto de teste
-              estiver fechado na monografia, eles podem ser atualizados para os valores oficiais.
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              Preencha as variáveis <code className="rounded bg-white/80 px-1">NEXT_PUBLIC_EVAL_*</code>{" "}
+              após rodar o experimento no notebook ou script de avaliação, para exibir os números da
+              banca.
             </p>
           )}
           <dl className="mt-6 space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm">
