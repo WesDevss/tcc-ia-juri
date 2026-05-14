@@ -20,6 +20,21 @@ npm run dev
 
 Abra [http://localhost:3000](http://localhost:3000).
 
+## Publicar no GitHub
+
+Na raiz do monorepo (`TCC - IA JURI`), o Git já está inicializado com um commit na branch `main`. Falta criar o repositório remoto e enviar o código.
+
+1. No GitHub: **New repository** → nome sugerido: `tcc-ia-juri` → **sem** README (o projeto já tem conteúdo).
+2. No PowerShell, na pasta do projeto:
+
+```powershell
+cd "c:\Users\Wesley\Desktop\TCC - IA JURI"
+git remote add origin https://github.com/SEU_USUARIO/tcc-ia-juri.git
+git push -u origin main
+```
+
+Substitua `SEU_USUARIO` e o nome do repositório pelo seu. Se o GitHub pedir login, use um [Personal Access Token](https://github.com/settings/tokens) como senha ou o **GitHub Desktop**.
+
 ## Variáveis de ambiente (Vercel)
 
 No painel do projeto: **Settings → Environment Variables**:
