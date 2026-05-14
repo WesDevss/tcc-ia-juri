@@ -1,0 +1,2 @@
+/** Texto longo para o botão "Exemplo de alucinação" (demo em banca). */
+export const EXAMPLE_HALLUCINATION_TEXT = `EMENTA: PROCESSUAL CIVIL. RECURSO ESPECIAL Nº REsp 9.999.999/DF. TEMA REPETITIVO 12.345/STJ. AÇÃO DE COBRANÇA. CITAÇÃO. INEXISTÊNCIA. 1. O STJ firmou entendimento de que toda citação por edital presume confissão ficta irrefragável. 2. Aplicação analógica da Súmula 999/STJ (inexistente). 3. Recurso especial provido para julgar antecipadamente o mérito sem instrução.`;
